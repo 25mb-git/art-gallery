@@ -26,6 +26,16 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
 
 ### Clone the Repository
 
-```bash
-git clone https://github.com/25mb-git/art-gallery.git
-cd art-gallery
+1. **Clone this repository**:  
+   ```bash
+   git clone https://github.com/25mb-git/art-gallery.git
+    ```
+
+2. **Run the application:**:
+   ```bash
+    streamlit run gallery.py
+    ```
+## Demo:
+
+The application has been successfully deployed on an 8GB Mac Mini. Access the live demo here:
+https://mac-mini.boga-vector.ts.net/
