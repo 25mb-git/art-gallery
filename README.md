@@ -1,5 +1,8 @@
 # 🎨 Streamlit Art Gallery
 
+The application has been deployed on an 8GB Mac Mini. Access the live app here:
+https://mac-mini.boga-vector.ts.net/
+
 A sleek, side-by-side art gallery application built with [Streamlit](https://streamlit.io). This app allows you to display, manage, and explore stunning art pieces in a modern and interactive layout.
 
 ---
@@ -35,7 +38,6 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
    ```bash
     streamlit run gallery.py
     ```
-## Demo:
 
-The application has been successfully deployed on an 8GB Mac Mini. Access the live demo here:
-https://mac-mini.boga-vector.ts.net/
+
+
