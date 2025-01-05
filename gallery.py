@@ -96,7 +96,12 @@ st.markdown("""
 # Streamlit App Setup
 st.title("🎨 Side-by-Side Art Gallery")
 st.write("Explore stunning art pieces displayed in a horizontal layout.")
-
+st.markdown(
+    '<div class="github-link">'
+    'Source code for this blog: <a href="https://github.com/25mb-git/art-gallery" target="_blank">Visit my GitHub Repository</a>'
+    '</div>',
+    unsafe_allow_html=True,
+)
 # Admin Authentication
 is_admin = False
 with st.sidebar.expander("Admin Login", expanded=False):
