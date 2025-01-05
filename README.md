@@ -33,8 +33,11 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
    ```bash
    git clone https://github.com/25mb-git/art-gallery.git
     ```
-
-2. **Run the application:**:
+2. **Install dependencies**:
+   ```bash
+    pip install -r requirements.txt
+   ```
+4. **Run the application:**:
    ```bash
     streamlit run gallery.py
     ```
