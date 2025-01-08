@@ -62,4 +62,3 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
 **Run the test app**:
    ```bash
     pytest test_app.py
-    ```
