@@ -60,8 +60,6 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
   Verifies that the art piece is no longer in the database.
 
 **Run the test app**:
-
    ```bash
     pytest test_app.py
     ```
-
