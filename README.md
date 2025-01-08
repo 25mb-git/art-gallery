@@ -59,6 +59,15 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
   Inserts an art piece and deletes it.
   Verifies that the art piece is no longer in the database.
 
-**Run the test app**:
+## Test Code
+1. **Run test code:**:
    ```bash
-    pytest test_app.py
+   pip install pytest
+    ```
+
+Make sure pytest is installed:
+
+2. **Run test code:**:
+   ```bash
+    pytest test/test_app.py
+    ```
