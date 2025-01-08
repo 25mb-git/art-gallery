@@ -63,11 +63,10 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
 
 ### Test execution
 1. **Run test code:**:
+Make sure pytest is installed:
    ```bash
    pip install pytest
     ```
-
-Make sure pytest is installed:
 
 2. **Run test code:**:
    ```bash
