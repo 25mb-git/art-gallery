@@ -37,7 +37,7 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
    ```bash
     pip install -r requirements.txt
    ```
-3. **Run the application:**:
+3. **Run the application**:
    ```bash
     streamlit run gallery.py
     ```
@@ -59,7 +59,8 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
   Inserts an art piece and deletes it.
   Verifies that the art piece is no longer in the database.
 
-**Run the test app:**:
+**Run the test app**:
+
    ```bash
     pytest test_app.py
     ```
