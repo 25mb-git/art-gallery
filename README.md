@@ -37,10 +37,30 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
    ```bash
     pip install -r requirements.txt
    ```
-4. **Run the application:**:
+3. **Run the application:**:
    ```bash
     streamlit run gallery.py
     ```
+### Testing the app
 
+1. test_save_to_db:
+  Tests adding an art piece to the database.
+  Verifies that the image, title, and description are saved correctly.
 
+2. test_fetch_art_pieces:
+  Inserts an art piece and fetches it using fetch_art_pieces().
+  Verifies the fetched data matches the inserted data.
+
+3. test_update_art_piece:
+  Inserts an art piece and updates its title and description.
+  Verifies that the update operation was successful.
+
+4. test_delete_art_piece:
+  Inserts an art piece and deletes it.
+  Verifies that the art piece is no longer in the database.
+
+**Run the test app:**:
+   ```bash
+    pytest test_app.py
+    ```
 
