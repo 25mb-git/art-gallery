@@ -1,62 +1,73 @@
 import streamlit as st
 import sqlite3
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import io
 
 # Page Configuration
-st.set_page_config(page_title="Art Gallery", layout="wide")
+st.set_page_config(page_title="Art and Video Gallery", layout="wide")
 
 # Database Setup
 DATABASE = "art_gallery.db"
 ADMIN_PASSWORD = "___your_password___"  # Replace with a secure password
 
 def init_db():
-    """Initialize the database with the necessary tables."""
+    """Initialize the database with the necessary tables and columns."""
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS gallery (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            description TEXT,
-            image BLOB
-        )
-    ''')
+
+    # Check for existing columns in the gallery table
+    c.execute("PRAGMA table_info(gallery)")
+    columns = [column[1] for column in c.fetchall()]
+
+    if "media" not in columns:
+        c.execute("ALTER TABLE gallery ADD COLUMN media BLOB")
+
+    if "media_type" not in columns:
+        c.execute("ALTER TABLE gallery ADD COLUMN media_type TEXT")
+
+    # Set default media_type to "image" for old entries
+    c.execute("UPDATE gallery SET media_type = 'image' WHERE media_type IS NULL OR media_type = ''")
     conn.commit()
     conn.close()
 
-def save_to_db(title, description, image):
-    """Save an art piece to the database."""
+def save_to_db(title, description, media, media_type):
+    """Save an art piece or video to the database."""
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute('INSERT INTO gallery (title, description, image) VALUES (?, ?, ?)', 
-              (title, description, image))
+    c.execute('INSERT INTO gallery (title, description, media, media_type) VALUES (?, ?, ?, ?)', 
+              (title, description, media, media_type))
     conn.commit()
     conn.close()
 
-def fetch_art_pieces():
-    """Fetch all art pieces from the database."""
+def fetch_gallery_items():
+    """Fetch all gallery items (art pieces and videos) from the database."""
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute('SELECT id, title, description, image FROM gallery ORDER BY id DESC')
-    pieces = c.fetchall()
+    c.execute('SELECT id, title, description, media, media_type FROM gallery ORDER BY id DESC')
+    items = c.fetchall()
     conn.close()
-    return pieces
+    return items
 
-def update_art_piece(piece_id, title, description):
-    """Update an art piece's title and description."""
+def update_gallery_item(item_id, title, description, new_media=None, new_media_type=None):
+    """Update the title, description, and optionally the media of a gallery item."""
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute('UPDATE gallery SET title = ?, description = ? WHERE id = ?', 
-              (title, description, piece_id))
+    
+    if new_media and new_media_type:
+        c.execute('UPDATE gallery SET title = ?, description = ?, media = ?, media_type = ? WHERE id = ?', 
+                  (title, description, new_media, new_media_type, item_id))
+    else:
+        c.execute('UPDATE gallery SET title = ?, description = ? WHERE id = ?', 
+                  (title, description, item_id))
+    
     conn.commit()
     conn.close()
 
-def delete_art_piece(piece_id):
-    """Delete an art piece from the database."""
+def delete_gallery_item(item_id):
+    """Delete a gallery item from the database."""
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    c.execute('DELETE FROM gallery WHERE id = ?', (piece_id,))
+    c.execute('DELETE FROM gallery WHERE id = ?', (item_id,))
     conn.commit()
     conn.close()
 
@@ -67,41 +78,41 @@ init_db()
 st.markdown("""
 <style>
     .card {
-        padding: 5px; /* Reduce padding inside the card */
-        margin: 5px; /* Minimal margin between cards */
+        padding: 5px;
+        margin: 5px;
         background-color: #ffffff;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         text-align: center;
     }
-    .card img {
+    .card img, .card video {
         border-radius: 10px;
-        margin: 0; /* No extra margins around the image */
+        margin: 0;
         display: block;
-        width: 100%; /* Ensure the image fills the card */
+        width: 100%;
     }
     .card-title {
-        font-size: 16px; /* Reduce font size of the title */
+        font-size: 16px;
         font-weight: bold;
-        margin-top: 5px; /* Minimal spacing for the title */
+        margin-top: 5px;
     }
     .card-description {
-        font-size: 12px; /* Reduce font size of the description */
+        font-size: 12px;
         color: gray;
-        margin: 2px 0; /* Minimal spacing for the description */
+        margin: 2px 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Streamlit App Setup
-st.title("🎨 Side-by-Side Art Gallery")
-st.write("Explore stunning art pieces displayed in a horizontal layout.")
+st.title("❤️ Art and Video Gallery")
 st.markdown(
     '<div class="github-link">'
-    'Source code for this blog: <a href="https://github.com/25mb-git/art-gallery" target="_blank">Visit my GitHub Repository</a>'
+    'Source code for this blog: <a href="https://github.com/25mb-git/art-gallery" target="_blank">visit my GitHub Repository</a>'
     '</div>',
     unsafe_allow_html=True,
 )
+
 # Admin Authentication
 is_admin = False
 with st.sidebar.expander("Admin Login", expanded=False):
@@ -116,56 +127,87 @@ with st.sidebar.expander("Admin Login", expanded=False):
 if is_admin:
     with st.sidebar.expander("Admin Panel", expanded=False):
         st.markdown('<div class="admin-section">', unsafe_allow_html=True)
-        uploaded_file = st.file_uploader("Upload an image of the art piece", type=["png", "jpg", "jpeg"])
+        uploaded_file = st.file_uploader("Upload an image or video", type=["png", "jpg", "jpeg", "mp4", "mov", "avi"])
 
         if uploaded_file:
-            image = Image.open(uploaded_file)
-            st.image(image, caption="Preview", use_column_width=True)
+            # Determine media type
+            if uploaded_file.type.startswith("image"):
+                media_type = "image"
+                preview_media = Image.open(uploaded_file)
+                st.image(preview_media, caption="Preview Image", use_column_width=True)
+                media_bytes = io.BytesIO()
+                preview_media.save(media_bytes, format=uploaded_file.type.split("/")[-1].upper())
+                media_data = media_bytes.getvalue()  # Convert image to bytes
+            elif uploaded_file.type.startswith("video"):
+                media_type = "video"
+                media_data = uploaded_file.getvalue()  # Directly use bytes for videos
+                st.video(media_data)
 
             # Get Title and Description
-            title = st.text_input("Art Piece Title", "")
-            description = st.text_area("Art Piece Description", "")
+            title = st.text_input("Media Title", "")
+            description = st.text_area("Media Description", "")
 
             # Save to Database
             if st.button("Add to Gallery", key="add_to_gallery"):
-                # Convert the image to binary
-                image_bytes = io.BytesIO()
-                image.save(image_bytes, format=image.format)
-                save_to_db(title, description, image_bytes.getvalue())
-                st.success("Art piece added to the gallery!")
+                save_to_db(title, description, media_data, media_type)
+                st.success("Media added to the gallery!")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Display Art Pieces Side by Side
-st.header("🖼️ Art Pieces")
-art_pieces = fetch_art_pieces()
-if art_pieces:
+# Display Art Pieces and Videos Side by Side
+st.header("Gallery")
+gallery_items = fetch_gallery_items()
+if gallery_items:
     cols = st.columns(3)  # Divide the page into 3 columns
-    for i, piece in enumerate(art_pieces):
-        piece_id, title, description, image_data = piece
-        col = cols[i % 3]  # Distribute pieces across columns
+    for i, item in enumerate(gallery_items):
+        item_id, title, description, media_data, media_type = item
+        col = cols[i % 3]  # Distribute items across columns
         with col:
             st.markdown('<div class="card">', unsafe_allow_html=True)
-            image = Image.open(io.BytesIO(image_data))
-            st.image(image, use_column_width=True)
+            if media_type == "image":
+                try:
+                    image = Image.open(io.BytesIO(media_data))
+                    st.image(image, use_column_width=True)
+                except UnidentifiedImageError:
+                    st.error(f"Unable to display {title}. The file might be corrupted or not an image.")
+            elif media_type == "video":
+                st.video(media_data)
+
             st.markdown(f'<div class="card-title">{title}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="card-description">{description}</div>', unsafe_allow_html=True)
 
             # Admin Controls
             if is_admin:
                 with st.expander(f"Admin Controls for {title}"):
-                    # Edit Title and Description
-                    new_title = st.text_input(f"Edit Title for {title}", value=title, key=f"title_{piece_id}")
-                    new_description = st.text_area(f"Edit Description for {title}", value=description, key=f"description_{piece_id}")
-                    if st.button(f"Update {title}", key=f"update_{piece_id}"):
-                        update_art_piece(piece_id, new_title, new_description)
+                    new_title = st.text_input(f"Edit Title for {title}", value=title, key=f"title_{item_id}")
+                    new_description = st.text_area(f"Edit Description for {title}", value=description, key=f"description_{item_id}")
+
+                    # Upload new media for replacement
+                    new_media_file = st.file_uploader(f"Upload new media for {title}", type=["png", "jpg", "jpeg", "mp4", "mov", "avi"], key=f"update_media_{item_id}")
+                    new_media_data = None
+                    new_media_type = None
+
+                    if new_media_file:
+                        if new_media_file.type.startswith("image"):
+                            new_media_type = "image"
+                            new_preview_media = Image.open(new_media_file)
+                            st.image(new_preview_media, caption="New Image Preview", use_column_width=True)
+                            new_media_bytes = io.BytesIO()
+                            new_preview_media.save(new_media_bytes, format=new_media_file.type.split("/")[-1].upper())
+                            new_media_data = new_media_bytes.getvalue()
+                        elif new_media_file.type.startswith("video"):
+                            new_media_type = "video"
+                            new_media_data = new_media_file.getvalue()
+                            st.video(new_media_data)
+
+                    if st.button(f"Update {title}", key=f"update_{item_id}"):
+                        update_gallery_item(item_id, new_title, new_description, new_media_data, new_media_type)
                         st.success(f"{title} updated!")
                         st.experimental_rerun()
 
-                    # Delete Art Piece
-                    if st.button(f"Delete {title}", key=f"delete_{piece_id}"):
-                        delete_art_piece(piece_id)
+                    if st.button(f"Delete {title}", key=f"delete_{item_id}"):
+                        delete_gallery_item(item_id)
                         st.warning(f"{title} deleted!")
                         st.experimental_rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.info("No art pieces in the gallery yet. Admins can upload art to get started!")
+    st.info("No art pieces or videos in the gallery yet. Admins can upload content to get started!")
