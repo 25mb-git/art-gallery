@@ -41,7 +41,9 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
    ```bash
     streamlit run gallery.py
     ```
-### Testing the app
+
+## Test Code
+### Test case
 
 1. test_save_to_db:
   Tests adding an art piece to the database.
@@ -59,6 +61,14 @@ A sleek, side-by-side art gallery application built with [Streamlit](https://str
   Inserts an art piece and deletes it.
   Verifies that the art piece is no longer in the database.
 
-**Run the test app**:
+### Test execution
+1. **Run test code:**:
+Make sure pytest is installed:
    ```bash
-    pytest test_app.py
+   pip install pytest
+    ```
+
+2. **Run test code:**:
+   ```bash
+    pytest test/test_app.py
+    ```
