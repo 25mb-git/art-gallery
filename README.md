@@ -1,4 +1,4 @@
-# 🎨 Streamlit Art Gallery
+# 🎨 Streamlit Art and Video Gallery
 
 The application has been deployed on an 8GB Mac Mini. Access the live app here:
 https://mac-mini.boga-vector.ts.net/
