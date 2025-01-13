@@ -101,6 +101,12 @@ st.markdown("""
         color: gray;
         margin: 2px 0;
     }
+    .github-link {
+        font-size: 14px;  /* Smaller font for GitHub link */
+        text-align: left;
+        margin-top: 10px;
+        color: #666;  /* Gray color */
+    }
 </style>
 """, unsafe_allow_html=True)
 
