@@ -15,20 +15,48 @@ def init_db():
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
 
-    # Check for existing columns in the gallery table
-    c.execute("PRAGMA table_info(gallery)")
-    columns = [column[1] for column in c.fetchall()]
+    # Create gallery table if not exists
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS gallery (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        description TEXT,
+        media BLOB,
+        media_type TEXT
+    )
+    ''')
 
-    if "media" not in columns:
-        c.execute("ALTER TABLE gallery ADD COLUMN media BLOB")
+    # Create counter table if not exists
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS view_counter (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        count INTEGER
+    )
+    ''')
 
-    if "media_type" not in columns:
-        c.execute("ALTER TABLE gallery ADD COLUMN media_type TEXT")
-
-    # Set default media_type to "image" for old entries
-    c.execute("UPDATE gallery SET media_type = 'image' WHERE media_type IS NULL OR media_type = ''")
+    # Initialize counter if empty
+    c.execute("SELECT COUNT(*) FROM view_counter")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO view_counter (count) VALUES (0)")
     conn.commit()
     conn.close()
+
+def increment_counter():
+    """Increment the web page view counter."""
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("UPDATE view_counter SET count = count + 1 WHERE id = 1")
+    conn.commit()
+    conn.close()
+
+def get_page_views():
+    """Get the current web page view count."""
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute("SELECT count FROM view_counter WHERE id = 1")
+    views = c.fetchone()[0]
+    conn.close()
+    return views
 
 def save_to_db(title, description, media, media_type):
     """Save an art piece or video to the database."""
@@ -71,8 +99,9 @@ def delete_gallery_item(item_id):
     conn.commit()
     conn.close()
 
-# Initialize Database
+# Initialize Database and Increment Counter
 init_db()
+increment_counter()
 
 # Add custom CSS for styling
 st.markdown("""
@@ -102,19 +131,26 @@ st.markdown("""
         margin: 2px 0;
     }
     .github-link {
-        font-size: 14px;  /* Smaller font for GitHub link */
+        font-size: 10px;  /* Smaller font for GitHub link */
         text-align: left;
         margin-top: 10px;
         color: #666;  /* Gray color */
+    }
+    .footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 12px;
+        color: #888;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Streamlit App Setup
 st.title("❤️ Art and Video Gallery")
+st.write("Millie Bay @ British School in Tokyo")
 st.markdown(
     '<div class="github-link">'
-    'Source code for this blog: <a href="https://github.com/25mb-git/art-gallery" target="_blank">visit my GitHub Repository</a>'
+    'Source code for this blog: <a href="https://github.com/25mb-git/art-gallery" target="_blank">visit my GitHub</a>'
     '</div>',
     unsafe_allow_html=True,
 )
@@ -132,7 +168,6 @@ with st.sidebar.expander("Admin Login", expanded=False):
 # Admin Panel
 if is_admin:
     with st.sidebar.expander("Admin Panel", expanded=False):
-        st.markdown('<div class="admin-section">', unsafe_allow_html=True)
         uploaded_file = st.file_uploader("Upload an image or video", type=["png", "jpg", "jpeg", "mp4", "mov", "avi"])
 
         if uploaded_file:
@@ -157,7 +192,6 @@ if is_admin:
             if st.button("Add to Gallery", key="add_to_gallery"):
                 save_to_db(title, description, media_data, media_type)
                 st.success("Media added to the gallery!")
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # Display Art Pieces and Videos Side by Side
 st.header("Gallery")
@@ -217,3 +251,12 @@ if gallery_items:
             st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info("No art pieces or videos in the gallery yet. Admins can upload content to get started!")
+
+# Footer Section
+page_views = get_page_views()
+st.markdown(f"""
+<div class="footer">
+    <p>© 2025 Millie Bay. All rights reserved.</p>
+    <p>Page Views: {page_views}</p>
+</div>
+""", unsafe_allow_html=True)
